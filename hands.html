@@ -1,0 +1,59 @@
+<canvas id="output"></canvas>
+<script>
+var canvas = document.getElementById("output"),
+    ctx = canvas.getContext("2d");
+
+// fullscreen
+canvas.width = document.body.clientWidth;
+canvas.height = document.body.clientHeight;
+
+var widthScale = 1; //canvas.width/480;
+var heightScale = 1; //canvas.height/100;
+
+function draw(obj) {
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "#222";
+  if ("hands" in obj) {
+    obj.hands.forEach(function(h) {
+      var pos = h.sphereCenter;
+      var size = Math.pow(h.sphereRadius,1.2);
+      ctx.fillRect(canvas.width/2+widthScale*pos[0]-size/2,canvas.height/2-heightScale*pos[1]-size/2,size,size);
+    });
+  }
+};
+
+// Support both the WebSocket and MozWebSocket objects
+if ((typeof(WebSocket) == 'undefined') &&
+    (typeof(MozWebSocket) != 'undefined')) {
+  WebSocket = MozWebSocket;
+}
+
+//Create and open the socket
+ws = new WebSocket("ws://localhost:6437/");
+
+// On successful connection
+ws.onopen = function(event) {
+  // connected
+};
+
+// On message received
+ws.onmessage = function(event) {
+  var obj = JSON.parse(event.data);
+  var str = JSON.stringify(obj, undefined, 2);
+  draw(obj);
+};
+
+// On socket close
+ws.onclose = function(event) {
+  ws = null;
+  // disconnected
+}
+</script>
+<style>
+html, body { margin: 0; padding: 0}
+body {
+  font-size: 8px;
+  font-family: sans-serif;
+}
+</style>

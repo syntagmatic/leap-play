@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<canvas id="visualizer" width=200 height=200></canvas>
+<script src="js/lib/d3.v3.js"></script>
+<script>
+d3.json("data/gestures/frolic-1.json", function(error, data) {
+  if (error) {
+    alert(error.statusText);
+    return
+  }
+
+  window.data = data;
+  var last = data.length-1;
+  var i = 0;
+  var duration = (data[last].timestamp - data[0].timestamp)/1000;
+  var step = duration/data.length;
+
+  function run() {
+    if (i == last) return;
+    renderPointables(data[i]);
+    i++;
+    setTimeout(run, step);
+  };
+  run();
+});
+
+var canvas = document.getElementById("visualizer");
+var ctx = canvas.getContext("2d");
+var x = d3.scale.linear().range([0,canvas.width]).domain([-200,200]);
+var y = d3.scale.linear().range([canvas.height,0]).domain([0,400]);
+
+function renderPointables(obj) {
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "#111";
+  if ("pointables" in obj) {
+    obj.pointables.forEach(function(p) {
+      var pos = p.tipPosition;
+      ctx.fillRect(x(pos[0]), y(pos[1]), 3, 3);
+    });
+  }
+};
+</script>
