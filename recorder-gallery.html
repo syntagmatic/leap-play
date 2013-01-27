@@ -12,7 +12,10 @@ var gestures = [
   "data/gestures/grabs-3.json",
   "data/gestures/rotate-cw-1.json",
   "data/gestures/rotate-cw-2.json",
-  "data/gestures/rotate-cw-3.json"
+  "data/gestures/rotate-cw-3.json",
+  "data/gestures/dismiss-right-1.json",
+  "data/gestures/dismiss-right-2.json",
+  "data/gestures/dismiss-right-3.json"
 ];
 
 gestures.forEach(portrait);
@@ -30,10 +33,13 @@ function portrait(url) {
     var duration = (data[last].timestamp - data[0].timestamp)/1000;
     var step = duration/data.length;
 
+    var container = document.createElement("div");
+    d3.select(container).attr("class", "gesture").html(url + "<br/>");
     var canvas = document.createElement("canvas");
-    canvas.width = 200;
-    canvas.height = 200;
-    document.body.appendChild(canvas);
+    canvas.width = 140;
+    canvas.height = 140;
+    container.appendChild(canvas);
+    document.body.appendChild(container);
     var ctx = canvas.getContext("2d");
     var x = d3.scale.linear().range([0,canvas.width]).domain([-200,200]);
     var y = d3.scale.linear().range([canvas.height,0]).domain([0,400]);
@@ -45,7 +51,7 @@ function portrait(url) {
       if ("pointables" in obj) {
         obj.pointables.forEach(function(p) {
           var pos = p.tipPosition;
-          ctx.fillRect(x(pos[0]), y(pos[1]), 5, 5);
+          ctx.fillRect(x(pos[0]), y(pos[1]), 4, 4);
         });
       }
     };
@@ -65,10 +71,16 @@ function portrait(url) {
 html, body {
   margin: 0;
   padding: 0;
-  background: #ddd;
+  background: #e3e3e3;
+  font-size: 9px;
+  font-family: Helvetica, Arial, sans-serif;
+}
+.gesture {
+  float: left;
+  margin: 8px 0 0 8px; 
+  border-radius: 8px;
 }
 canvas {
-  margin: 8px;
-  border-radius: 20px;
+  border-radius: 4px;
 }
 </style>
