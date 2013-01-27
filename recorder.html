@@ -59,13 +59,13 @@ function init() {
 	} else {
 	  record_button.value =  "record gesture";
 	  // print out results if finished recording
-	  var html = "<pre>[\n";
+	  var html = "<textarea>[\n";
 	  recorded.forEach(function(obj) {
 	    html += JSON.stringify(obj, undefined, 0);
       html += ",\n";
 	  });
     html = html.slice(0,html.length-2);
-	  html += "\n]</pre>";
+	  html += "\n]</textarea>";
 	  document.getElementById("output").innerHTML = html;
 	}
 	
@@ -101,6 +101,10 @@ p {
 .bad {
   color: red;
   font-weight: bold;
+}
+textarea {
+  height: 400px;
+  width: 600px;
 }
 </style>
 </html>
