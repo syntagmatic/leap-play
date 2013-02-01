@@ -11,9 +11,13 @@ Total: <strong id="delta-total"></strong> ms |
 Messages: <strong id="msg-total"></strong>
 </p>
 <canvas id="deltas" width=200 height=50></canvas>
+<h4>Number of Pointables</h4>
+<canvas id="pointables" width=200 height=60></canvas>
+<h4>Average pointable velocity</h4>
+<canvas id="velocities" width=200 height=60></canvas>
 <script src="js/lib/d3.v3.js"></script>
 <script>
-d3.json("data/gestures/frolic-1.json", function(error, data) {
+d3.json("data/gestures/frolic-2.json", function(error, data) {
   if (error) {
     alert(error.statusText);
     return
@@ -22,6 +26,8 @@ d3.json("data/gestures/frolic-1.json", function(error, data) {
   window.data = data;
   fleas(data);
   between(data);
+  pointables(data);
+  velocities(data);
 });
 
 /* Animated 2d visualization */
@@ -76,6 +82,49 @@ function between(data) {
   d3.select("#msg-total").text(data.length);
 
   deltas.forEach(function(d,i) {
+    ctx.fillRect(2*i,y(d),1,canvas.height-y(d));
+  });
+};
+
+/* number of pointables */
+function pointables(data) {
+  var pointables_per_msg = data.map(function(d,i) {
+    if ("pointables" in d) return d.pointables.length;
+    return 0;
+  });
+
+  var canvas = document.getElementById("pointables");
+  canvas.width = pointables_per_msg.length*2;
+  var ctx = canvas.getContext("2d");
+
+  pointables_per_msg.forEach(function(d,i) {
+    d3.range(d).forEach(function(j) {
+      ctx.fillRect(2*i,canvas.height-j*5,1,4);
+    });
+  });
+};
+
+/* average pointable velocities */
+function velocities(data) {
+  var velocities = data.map(function(d,i) {
+    if ("pointables" in d) {
+      var summed = 0;
+      var ave_velocities = d.pointables.forEach(function(p) {
+        var vel = p.tipVelocity;
+        summed += Math.sqrt(vel[0]*vel[0]+vel[1]*vel[1]+vel[2]*vel[2]);
+      });
+      return summed/d.pointables.length || 0;
+    }
+    return 0;
+  });
+  var canvas = document.getElementById("velocities");
+  canvas.width = velocities.length*2;
+  var ctx = canvas.getContext("2d");
+  var extents = d3.extent(velocities);
+  var y = d3.scale.linear().range([canvas.height,0]).domain([0,extents[1]]);
+
+
+  velocities.forEach(function(d,i) {
     ctx.fillRect(2*i,y(d),1,canvas.height-y(d));
   });
 };
