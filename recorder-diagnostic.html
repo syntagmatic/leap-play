@@ -1,24 +1,37 @@
 <!doctype html>
 <meta charset="utf-8">
 <canvas id="line" width=2600 height=800 style="position:absolute;"></canvas>
-<h4>x/y animation</h4>
-<canvas id="visualizer" width=180 height=180></canvas>
-<h4>Time between messages</h4>
+<div class="left">
+  <h4>Planar animation 0,1</h4>
+  <canvas id="planar" width=180 height=180></canvas>
+</div>
+<div class="left">
+  <h4>Profile animation</h4>
+  <canvas id="profile" width=180 height=180></canvas>
+</div>
+<div style="clear:both;"></div>
+<h4>Time Between Frames</h4>
 <p>
-Min: <strong id="delta-min"></strong> ms | 
-Max: <strong id="delta-max"></strong> ms |
-Ave: <strong id="delta-ave"></strong> ms |
-Total: <strong id="delta-total"></strong> ms |
-Messages: <strong id="msg-total"></strong>
+Min: <strong id="delta-min"></strong> ms - 
+Max: <strong id="delta-max"></strong> ms -
+Ave: <strong id="delta-ave"></strong> ms -
+Total: <strong id="delta-total"></strong> ms -
+Frames: <strong id="frames-total"></strong>
 </p>
 <canvas id="deltas" width=200 height=50></canvas>
 <h4>Number of Pointables</h4>
 <canvas id="pointables" width=200 height=60></canvas>
-<h4>Average pointable velocity</h4>
+<h4>Average Pointable Velocity</h4>
 <canvas id="velocities" width=200 height=60></canvas>
+<h4>Number of Hands</h4>
+<canvas id="hands" width=200 height=60></canvas>
 <script src="js/lib/d3.v3.js"></script>
 <script>
-d3.json("data/gestures/frolic-2.json", function(error, data) {
+var fillColor = "#999";
+var fingerColor = "#fa8";
+var countColor = "#8fa";
+
+d3.json("data/gestures/frolic-3.json", function(error, data) {
   if (error) {
     alert(error.statusText);
     return
@@ -29,6 +42,7 @@ d3.json("data/gestures/frolic-2.json", function(error, data) {
   between(data);
   pointables(data);
   velocities(data);
+  hands(data);
 });
 
 /* Animated 2d visualization */
@@ -38,19 +52,37 @@ function fleas(data) {
   var duration = (data[last].timestamp - data[0].timestamp)/1000;
   var step = duration/data.length;
 
-  var canvas = document.getElementById("visualizer");
-  var ctx = canvas.getContext("2d");
-  var x = d3.scale.linear().range([0,canvas.width]).domain([-200,200]);
-  var y = d3.scale.linear().range([canvas.height,0]).domain([0,400]);
+  var canvasPlanar = document.getElementById("planar");
+  var ctxPlanar = canvasPlanar.getContext("2d");
+  var canvasProfile = document.getElementById("profile");
+  var ctxProfile = canvasProfile.getContext("2d");
 
-  function renderPointables(obj) {
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = "#111";
+  var x = d3.scale.linear().range([0,canvasPlanar.width]).domain([-200,200]);
+  var y = d3.scale.linear().range([canvasPlanar.height,0]).domain([0,400]);
+
+  var xProfile = d3.scale.linear().range([0,canvasProfile.width]).domain([-200,200]);
+  var yProfile = d3.scale.linear().range([canvasProfile.height,0]).domain([0,400]);
+
+  function renderPointablesPlanar(obj) {
+    ctxPlanar.fillStyle = "rgba(0,0,0,0.4)";
+    ctxPlanar.fillRect(0,0,canvasPlanar.width,canvasPlanar.height);
+    ctxPlanar.fillStyle = fingerColor;
     if ("pointables" in obj) {
       obj.pointables.forEach(function(p) {
         var pos = p.tipPosition;
-        ctx.fillRect(x(pos[0]), y(pos[1]), 3, 3);
+        ctxPlanar.fillRect(x(pos[0]), y(pos[1]), 3, 3);
+      });
+    }
+  };
+
+  function renderPointablesProfile(obj) {
+    ctxProfile.fillStyle = "rgba(0,0,0,0.4)";
+    ctxProfile.fillRect(0,0,canvasProfile.width,canvasProfile.height);
+    ctxProfile.fillStyle = fingerColor;
+    if ("pointables" in obj) {
+      obj.pointables.forEach(function(p) {
+        var pos = p.tipPosition;
+        ctxProfile.fillRect(x(pos[2]), y(pos[1]), 3, 3);
       });
     }
   };
@@ -58,12 +90,14 @@ function fleas(data) {
   // line moving across the screen
   var canvas2 = document.getElementById("line");
   var ctx2 = canvas2.getContext("2d");
-  ctx2.fillStyle = "rgba(180,0,0,0.4)";
+  ctx2.fillStyle = "rgba(180,244,0,0.7)";
 
   function run() {
-    renderPointables(data[i]);
+    renderPointablesPlanar(data[i]);
+    renderPointablesProfile(data[i]);
+
     ctx2.clearRect(0,0,canvas2.width,canvas2.height);
-    ctx2.fillRect(2*i,0,1,800);
+    ctx2.fillRect(i,200,1,800);
     i++;
     if (i == last) i = 0;
     setTimeout(run, step);
@@ -71,7 +105,7 @@ function fleas(data) {
   run();
 };
 
-/* see time between messages */
+/* see time between frames */
 function between(data) {
   var deltas = data.slice(1).map(function(d,i) {
     return d.timestamp - data[i].timestamp;
@@ -80,6 +114,7 @@ function between(data) {
   var canvas = document.getElementById("deltas");
   canvas.width = deltas.length*2;
   var ctx = canvas.getContext("2d");
+  ctx.fillStyle = fillColor;
   var extents = d3.extent(deltas);
   var duration = (data[data.length-1].timestamp - data[0].timestamp)/1000;
   var y = d3.scale.linear().range([canvas.height,0]).domain([0,extents[1]]);
@@ -87,10 +122,10 @@ function between(data) {
   d3.select("#delta-max").text(extents[1]/1000);
   d3.select("#delta-ave").text((duration/data.length).toPrecision(5));
   d3.select("#delta-total").text(duration);
-  d3.select("#msg-total").text(data.length);
+  d3.select("#frames-total").text(data.length);
 
   deltas.forEach(function(d,i) {
-    ctx.fillRect(2*i,y(d),1,canvas.height-y(d));
+    ctx.fillRect(i,y(d),1,canvas.height-y(d));
   });
 };
 
@@ -104,10 +139,30 @@ function pointables(data) {
   var canvas = document.getElementById("pointables");
   canvas.width = pointables_per_msg.length*2;
   var ctx = canvas.getContext("2d");
+  ctx.fillStyle = fingerColor;
 
   pointables_per_msg.forEach(function(d,i) {
     d3.range(d).forEach(function(j) {
-      ctx.fillRect(2*i,canvas.height-j*5,1,4);
+      ctx.fillRect(i,canvas.height-(j+1)*5,1,3);
+    });
+  });
+};
+
+/* number of hands */
+function hands(data) {
+  var hands_per_msg = data.map(function(d,i) {
+    if ("hands" in d) return d.hands.length;
+    return 0;
+  });
+
+  var canvas = document.getElementById("hands");
+  canvas.width = hands_per_msg.length*2;
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = countColor;
+
+  hands_per_msg.forEach(function(d,i) {
+    d3.range(d).forEach(function(j) {
+      ctx.fillRect(i,canvas.height-(j+1)*5,1,3);
     });
   });
 };
@@ -128,12 +183,12 @@ function velocities(data) {
   var canvas = document.getElementById("velocities");
   canvas.width = velocities.length*2;
   var ctx = canvas.getContext("2d");
+  ctx.fillStyle = fillColor;
   var extents = d3.extent(velocities);
   var y = d3.scale.linear().range([canvas.height,0]).domain([0,extents[1]]);
 
-
   velocities.forEach(function(d,i) {
-    ctx.fillRect(2*i,y(d),1,canvas.height-y(d));
+    ctx.fillRect(i,y(d),1,canvas.height-y(d));
   });
 };
 </script>
@@ -141,8 +196,14 @@ function velocities(data) {
 body {
   font-size: 14px;
   font-family: Helvetica, Arial, sans-serif;
+  background: #111;
+  color: #dcb;
 }
 h4 {
   margin: 20px 0 0 4px;
+}
+.left {
+  float: left;
+  margin-left: 20px;
 }
 </style>
