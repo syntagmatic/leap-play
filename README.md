@@ -1,7 +1,5 @@
 Experiments with the Leap Motion.
 
-I've started focusing on a gesture recording and analysis system.
-
 Use *recorder.html* to record a gesture as a JSON structure. You have to copy+paste the output into a text file, though I plan to make an app of it soon.
 
 You can view recorded gestures by adjusting the URLs in one of these pages:
