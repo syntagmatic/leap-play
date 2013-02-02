@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<canvas id="line" width=2600 height=800 style="position:absolute;"></canvas>
+<canvas id="line" width=200 height=1300 style="position:absolute;"></canvas>
 <div class="left">
   <h4>Planar animation 0,1</h4>
   <canvas id="planar" width=180 height=180></canvas>
@@ -21,17 +21,31 @@ Frames: <strong id="frames-total"></strong>
 <canvas id="deltas" width=200 height=50></canvas>
 <h4>Number of Pointables</h4>
 <canvas id="pointables" width=200 height=60></canvas>
+<h4>Number of Pointables By Id</h4>
+<p>
+Uniques: <strong id="pointable-uniques"></strong>
+</p>
+<canvas id="pointables-by-id" width=200 height=60></canvas>
 <h4>Average Pointable Velocity</h4>
 <canvas id="velocities" width=200 height=60></canvas>
+<h4>Pointable Velocity Components, Averaged</h4>
+<p>x</p>
+<canvas id="velocity-x" width=200 height=60></canvas><br/>
+<p>y</p>
+<canvas id="velocity-y" width=200 height=60></canvas><br/>
+<p>z</p>
+<canvas id="velocity-z" width=200 height=60></canvas><br/>
 <h4>Number of Hands</h4>
 <canvas id="hands" width=200 height=60></canvas>
 <script src="js/lib/d3.v3.js"></script>
+<script src="js/lib/underscore.js"></script>
 <script>
 var fillColor = "#999";
 var fingerColor = "#fa8";
 var countColor = "#8fa";
+var faintColor = "rgba(100,100,100,0.5)";
 
-d3.json("data/gestures/frolic-3.json", function(error, data) {
+d3.json("data/gestures/frolic-2.json", function(error, data) {
   if (error) {
     alert(error.statusText);
     return
@@ -41,7 +55,9 @@ d3.json("data/gestures/frolic-3.json", function(error, data) {
   fleas(data);
   between(data);
   pointables(data);
+  pointablesById(data);
   velocities(data);
+  velocityComponents(data);
   hands(data);
 });
 
@@ -89,6 +105,7 @@ function fleas(data) {
 
   // line moving across the screen
   var canvas2 = document.getElementById("line");
+  canvas2.width = data.length;
   var ctx2 = canvas2.getContext("2d");
   ctx2.fillStyle = "rgba(180,244,0,0.7)";
 
@@ -97,7 +114,8 @@ function fleas(data) {
     renderPointablesProfile(data[i]);
 
     ctx2.clearRect(0,0,canvas2.width,canvas2.height);
-    ctx2.fillRect(i,200,1,800);
+    ctx2.fillRect(i,300,1,1200);
+
     i++;
     if (i == last) i = 0;
     setTimeout(run, step);
@@ -112,7 +130,7 @@ function between(data) {
   });
 
   var canvas = document.getElementById("deltas");
-  canvas.width = deltas.length*2;
+  canvas.width = deltas.length;
   var ctx = canvas.getContext("2d");
   ctx.fillStyle = fillColor;
   var extents = d3.extent(deltas);
@@ -137,7 +155,7 @@ function pointables(data) {
   });
 
   var canvas = document.getElementById("pointables");
-  canvas.width = pointables_per_msg.length*2;
+  canvas.width = pointables_per_msg.length;
   var ctx = canvas.getContext("2d");
   ctx.fillStyle = fingerColor;
 
@@ -146,7 +164,32 @@ function pointables(data) {
       ctx.fillRect(i,canvas.height-(j+1)*5,1,3);
     });
   });
-};
+}
+
+/* pointables by id */
+function pointablesById(data) {
+  var pointables_by_id = data.map(function(d,i) {
+    if ("pointables" in d) return d.pointables.map(function(p) { return p.id; });
+    return 0;
+  });
+
+  var canvas = document.getElementById("pointables-by-id");
+  canvas.width = pointables_by_id.length;
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = fingerColor;
+
+  var flattened = _(pointables_by_id).flatten();
+  var max = d3.max(flattened);
+  var uniqs = _(flattened).chain().uniq().sortBy(_.identity).value().join(",");
+
+  d3.select("#pointable-uniques").text(uniqs);
+
+  pointables_by_id.forEach(function(frame,i) {
+    frame.forEach(function(d) {
+      ctx.fillRect(i,d*2,1,1);
+    });
+  });
+};;
 
 /* number of hands */
 function hands(data) {
@@ -156,7 +199,7 @@ function hands(data) {
   });
 
   var canvas = document.getElementById("hands");
-  canvas.width = hands_per_msg.length*2;
+  canvas.width = hands_per_msg.length;
   var ctx = canvas.getContext("2d");
   ctx.fillStyle = countColor;
 
@@ -181,15 +224,83 @@ function velocities(data) {
     return 0;
   });
   var canvas = document.getElementById("velocities");
-  canvas.width = velocities.length*2;
+  canvas.width = velocities.length;
   var ctx = canvas.getContext("2d");
   ctx.fillStyle = fillColor;
   var extents = d3.extent(velocities);
-  var y = d3.scale.linear().range([canvas.height,0]).domain([0,extents[1]]);
+  var y = d3.scale.linear().range([canvas.height,0]).domain(extents);
 
   velocities.forEach(function(d,i) {
     ctx.fillRect(i,y(d),1,canvas.height-y(d));
   });
+};
+
+/* pointable velocity component average */
+function velocityComponents(data) {
+  var velocities = data.map(function(d,i) {
+    if ("pointables" in d) {
+      var x = 0,
+          y = 0,
+          z = 0,
+          num = d.pointables.length;
+      var ave_velocities = d.pointables.forEach(function(p) {
+        var vel = p.tipVelocity;
+        x += vel[0];
+        y += vel[1];
+        z += vel[2];
+      });
+      return [x/num || 0,y/num || 0,z/num || 0];
+    }
+    return [0,0,0];
+  });
+
+  var canvasX = document.getElementById("velocity-x");
+  var canvasY = document.getElementById("velocity-y");
+  var canvasZ = document.getElementById("velocity-z");
+
+  canvasX.width = data.length;
+  canvasY.width = data.length;
+  canvasZ.width = data.length;
+
+  var ctxX = canvasX.getContext("2d");
+  var ctxY = canvasY.getContext("2d");
+  var ctxZ = canvasZ.getContext("2d");
+
+  var extentsX = d3.extent(velocities, function(d) { return d[0]; });
+  var extentsY = d3.extent(velocities, function(d) { return d[1]; });
+  var extentsZ = d3.extent(velocities, function(d) { return d[2]; });
+
+  var yX = d3.scale.linear().range([canvasX.height,0]).domain(extentsX);
+  var yY = d3.scale.linear().range([canvasY.height,0]).domain(extentsY);
+  var yZ = d3.scale.linear().range([canvasZ.height,0]).domain(extentsZ);
+
+  // line at 0
+  ctxX.fillStyle = faintColor;
+  ctxY.fillStyle = faintColor;
+  ctxZ.fillStyle = faintColor;
+  ctxX.fillRect(0,yX(0)-0.5,canvasX.width,1);
+  ctxY.fillRect(0,yY(0)-0.5,canvasY.width,1);
+  ctxZ.fillRect(0,yZ(0)-0.5,canvasZ.width,1);
+
+  ctxX.strokeStyle = fillColor;
+  ctxY.strokeStyle = fillColor;
+  ctxZ.strokeStyle = fillColor;
+
+  ctxX.beginPath();
+  ctxY.beginPath();
+  ctxZ.beginPath();
+  ctxX.moveTo(1,yX(velocities[0][0]),1,canvasX.height-yX(velocities[0][0]));
+  ctxY.moveTo(1,yY(velocities[0][1]),1,canvasY.height-yY(velocities[0][1]));
+  ctxZ.moveTo(1,yZ(velocities[0][2]),1,canvasZ.height-yZ(velocities[0][2]));
+  velocities.forEach(function(d,i) {
+    ctxX.lineTo(i,yX(d[0]),1,canvasX.height-yX(d[0]));
+    ctxY.lineTo(i,yY(d[1]),1,canvasY.height-yY(d[1]));
+    ctxZ.lineTo(i,yZ(d[2]),1,canvasZ.height-yZ(d[2]));
+  });
+  ctxX.stroke();
+  ctxY.stroke();
+  ctxZ.stroke();
+
 };
 </script>
 <style>
@@ -200,10 +311,13 @@ body {
   color: #dcb;
 }
 h4 {
-  margin: 20px 0 0 4px;
+  margin: 20px 0 4px 0;
 }
 .left {
   float: left;
   margin-left: 20px;
+}
+#line {
+  pointer-events: none;
 }
 </style>
