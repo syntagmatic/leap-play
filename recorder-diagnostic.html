@@ -62,6 +62,7 @@ var fillColor = "#37A0CF";
 var fingerColor = "#FDAE61";
 var handColor = "#FFFFBF";
 var faintColor = "rgba(150,150,150,0.5)";
+var darkColor = "rgba(18,18,18,0.5)";
 
 d3.json("data/gestures/smooth.json", function(error, data) {
   if (error) {
@@ -322,12 +323,12 @@ function velocityComponents(data) {
   var yZ = d3.scale.linear().range([canvasZ.height,0]).domain(extentsZ);
 
   // line at 0
-  ctxX.fillStyle = faintColor;
-  ctxY.fillStyle = faintColor;
-  ctxZ.fillStyle = faintColor;
-  ctxX.fillRect(0,yX(0)-0.5,canvasX.width,1);
-  ctxY.fillRect(0,yY(0)-0.5,canvasY.width,1);
-  ctxZ.fillRect(0,yZ(0)-0.5,canvasZ.width,1);
+  ctxX.fillStyle = darkColor;
+  ctxY.fillStyle = darkColor;
+  ctxZ.fillStyle = darkColor;
+  ctxX.fillRect(0,yX(0),canvasX.width,canvasX.height/2);
+  ctxY.fillRect(0,yY(0),canvasY.width,canvasX.height/2);
+  ctxZ.fillRect(0,yZ(0),canvasZ.width,canvasX.height/2);
 
   ctxX.strokeStyle = fillColor;
   ctxY.strokeStyle = fillColor;
@@ -354,7 +355,7 @@ function velocityComponents(data) {
 body {
   font-size: 12px;
   font-family: Helvetica, Arial, sans-serif;
-  background: #1a1a1a;
+  background: #1e1e1e;
   color: #9b9994;
   margin: 0;
 }
