@@ -1,7 +1,8 @@
 <!doctype html>
 <meta charset="utf-8">
 <h1>Gesture Diagnostics <small id="gesture-url"></small></h1>
-<canvas id="line" width=200 height=1300 style="position:absolute;"></canvas>
+<canvas id="interaction" width=200 height=200 style="position:absolute;"></canvas>
+<canvas id="line" width=200 height=900 style="position:absolute;"></canvas>
 <div class="left finger">
   <canvas id="planar" width=160 height=160></canvas>
   <h4>Planar Pointables</h4>
@@ -58,13 +59,58 @@
 <script src="js/lib/d3.v3.js"></script>
 <script src="js/lib/underscore.js"></script>
 <script>
-var gestureUrl = "data/gestures/elbow-bends-1.json";
+var gestureUrl = "data/gestures/frolic-2.json";
+
+// current frame
+var i = 0;
 
 var fillColor = "#37A0CF";
 var fingerColor = "#FDAE61";
 var handColor = "#FFFFBF";
 var faintColor = "rgba(150,150,150,0.5)";
 var darkColor = "rgba(18,18,18,0.5)";
+
+
+var canvas = document.getElementById("interaction"),
+    ctx = canvas.getContext("2d");
+
+// fullscreen
+canvas.width = document.body.clientWidth;
+canvas.height = document.body.clientHeight;
+ctx.fillStyle = "#fff";
+
+var widthScale = 10; //canvas.width/480;
+var heightScale = 12; //canvas.height/100;
+
+function draw(obj) {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if ("pointables" in obj) {
+    var rects = obj.pointables.map(function(p) {
+      var pos = p.tipPosition;
+      var size = (250-pos[2])/15;
+      //ctx.fillRect(canvas.width/2+widthScale*pos[0]-size/2,canvas.height/2-heightScale*pos[1]-size/2,size,size);
+      return [canvas.width/2+widthScale*pos[0]-size/2,canvas.height/2-heightScale*pos[1]-size/2,size,size];
+    });
+    return rects[0];
+  }
+  return undefined;
+};
+
+
+//Create and open the socket
+ws = new WebSocket("ws://localhost:6437/");
+
+// On successful connection
+ws.onopen = function(event) {
+  // connected
+};
+
+
+// On socket close
+ws.onclose = function(event) {
+  ws = null;
+  // disconnected
+}
 
 d3.json(gestureUrl, function(error, data) {
   if (error) {
@@ -87,7 +133,6 @@ d3.json(gestureUrl, function(error, data) {
 /* Animated 2d visualization */
 function fleas(data) {
   var last = data.length-1;
-  var i = 0;
   var duration = (data[last].timestamp - data[0].timestamp)/1000;
   var step = duration/data.length;
 
@@ -167,12 +212,14 @@ function fleas(data) {
 
     ctx2.clearRect(0,0,canvas2.width,canvas2.height);
     ctx2.fillRect(i-1,190,2,1200);
-
-    i++;
-    if (i == last) i = 0;
-    setTimeout(run, step);
   };
-  run();
+  // On message received
+  ws.onmessage = function(event) {
+    var obj = JSON.parse(event.data);
+    var rect = draw(obj);
+    if (rect) i = Math.round(data.length*rect[0]/canvas.width);
+    run();
+  };
 };
 
 /* see time between frames */
@@ -362,6 +409,8 @@ body {
   background: #1e1e1e;
   color: #9b9994;
   margin: 0;
+  width: 100%;
+  height: 100%;
 }
 h1 {
   font-size: 14px;
@@ -381,6 +430,9 @@ canvas {
 .left {
   float: left;
   margin-left: 20px;
+}
+#interaction {
+  z-index: 5;
 }
 #line {
   pointer-events: none;
