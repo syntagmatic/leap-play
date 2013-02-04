@@ -4,19 +4,19 @@
 <canvas id="interaction" width=200 height=200 style="position:absolute;"></canvas>
 <canvas id="line" width=200 height=900 style="position:absolute;"></canvas>
 <div class="left finger">
-  <canvas id="planar" width=160 height=160></canvas>
+  <canvas id="planar" width=200 height=140></canvas>
   <h4>Planar Pointables</h4>
 </div>
 <div class="left hand">
-  <canvas id="handable" width=160 height=160></canvas>
+  <canvas id="handable" width=200 height=140></canvas>
   <h4>Planar Hands</h4>
 </div>
 <div class="left finger">
-  <canvas id="profile" width=160 height=160></canvas>
+  <canvas id="profile" width=200 height=140></canvas>
   <h4>Profile Pointables</h4>
 </div>
 <div class="left finger">
-  <canvas id="pointable-lengths" width=160 height=160></canvas>
+  <canvas id="pointable-lengths" width=200 height=140></canvas>
   <h4>Pointable Lengths</h4>
 </div>
 <div style="clear:both;"></div>
@@ -59,7 +59,7 @@
 <script src="js/lib/d3.v3.js"></script>
 <script src="js/lib/underscore.js"></script>
 <script>
-var gestureUrl = "data/gestures/frolic-2.json";
+var gestureUrl = "data/gestures/frolic-4.json";
 
 // current frame
 var i = 0;
@@ -205,6 +205,8 @@ function fleas(data) {
   ctx2.fillStyle = "rgba(215,65,68,0.6)";
 
   function run() {
+    if (i >= data.length) i = data.length-1;
+    if (i < 0 ) i = 0;
     renderPointablesPlanar(data[i]);
     renderPointablesProfile(data[i]);
     renderHandables(data[i]);
@@ -419,7 +421,7 @@ h1 {
 }
 h4 {
   font-size: 10px;
-  margin: -2px 0 10px 16px;
+  margin: -1px 0 10px 16px;
   padding: 0;
   line-height: 10px;
   font-weight: normal;
@@ -433,9 +435,13 @@ canvas {
 }
 #interaction {
   z-index: 5;
+  top: 0;
+  left: 0;
 }
 #line {
   pointer-events: none;
+  top: 0;
+  left: 0;
 }
 h1 small {
   margin-left: 12px;
