@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!-- saved from url=(0113)file:///C:/Users/user1/AppData/Local/Temp/Temp1_Leap_Developer_Kit_0.7.1_Windows.zip/Leap_SDK/samples/Sample.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Leap JavaScript API</title>
+<title>Leap Gesture Recorder</title>
 <script>
 var ws,
-     record = function() {};
+    record = function() {};
 
 // Support both the WebSocket and MozWebSocket objects
 if ((typeof(WebSocket) == 'undefined') &&
@@ -31,14 +31,14 @@ function init() {
     var obj = JSON.parse(event.data);
 	if (recording) { 
 	  recorded.push(obj);
-	  //document.getElementById("samplesize").innerHTML = recorded.length;
+    if (recorded.length % 12 == 0) document.getElementById("samplesize").innerHTML = recorded.length;
 	};
   };
   
   // On socket close
   ws.onclose = function(event) {
     ws = null;
-    document.getElementById("main").style.visibility = "hidden";
+style.visibility = "hidden";
     document.getElementById("connection").innerHTML = "<span class='bad'>WebSocket connection</span> closed";
   }
   
@@ -58,6 +58,7 @@ function init() {
 	  record_button.value =  "finish recording";
 	} else {
 	  record_button.value =  "record gesture";
+    document.getElementById("samplesize").innerHTML = recorded.length;
 	  // print out results if finished recording
 	  var html = "<textarea>[\n";
 	  recorded.forEach(function(obj) {
@@ -79,7 +80,8 @@ function init() {
 <h1>Leap Gesture Recorder</h1>
 <p>A utility for recording a few seconds of data from a Leap Motion sensor.</p>
 <p><strong>Press the record button to begin recording a gesture.</strong><br/>Click it again to output the collected data as JSON text on the page.</p>
-<p>You can use the data to visualize and analyze a single gesture,<br/>or create a database of gestures to test gesture detection routines.</p>
+<p>You can use the data to visualize and analyze a single gesture,<br/>or create a database of gestures to test gesture detection routines. The easiest way is to copy+paste to a JSON file.</p>
+<p>Check out the <a href="recorder-gallery.html">gallery</a> and <a href="recorder-diagnostic.html">diagnostic</a> demos.</p>
 <p id="connection">WebSocket connection open!</p>
 <div id="main" style="visibility: visible;">
   <input type="button" value="record gesture" onclick="record()" id="recorder"></input><strong id="samplesize">0</strong> samples recorded
