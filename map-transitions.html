@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Map Projection Transitions</title>
+<style>
+.breadcrumbs {
+  font-size: small;
+  text-align: center;
+  width: 100%;
+  padding: 5px 0;
+  margin: 0;
+  font-style: italic;
+  border-bottom: solid #eee 1px;
+  color: #000;
+}
+
+.breadcrumbs a {
+  color: #669;
+}
+
+.breadcrumbs a:hover {
+  color: #000;
+}
+
+p.cite {
+  text-align: right;
+  font-size: small;
+  font-style: italic;
+}
+
+p.cite, p.cite a {
+  color: #666;
+}
+
+body {
+  margin-top: 0;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 300;
+}
+
+h1 {
+  font-size: 2.5em;
+}
+
+canvas {
+  cursor: move;
+}
+
+.wrapper {
+  width: 600px;
+  margin: 1em auto;
+  text-align: justify;
+}
+
+.center {
+  text-align: center;
+}
+
+.thumb {
+  width: 200px;
+  height: 220px;
+  text-align: center;
+  float: left;
+}
+
+.thumb img {
+  width: 200px;
+  border: none;
+}
+
+.clear {
+  clear: both;
+}
+#map { cursor: move; }
+</style>
+
+<p class="breadcrumbs">Original Map Projection Transitions example by <a href="http://www.jasondavies.com/">Jason Davies</a>
+
+<h1>Leap Map Rotation</h1>
+<h4>Using Palm Normals</h4>
+
+<div id="map"></div>
+
+<p><select id="projection-menu"></select>
+
+<div class="wrapper">
+  <p>Use your hand to rotate the globe. Hold your hand above the leap, towards the screen. Tilt left and right and pitch up an down to spin the globe. The normal vector of the hand is used to compute this rotation.
+</div>
+
+<script src="js/lib/d3.v3.js"></script>
+<script src="js/lib/d3.geo.projection.min.js"></script>
+<script src="js/lib/topojson.min.js"></script>
+<script src="js/lib/leap.js"></script>
+<script>
+// connect leap motion
+var controller = new Leap.Controller();
+controller.connect()
+
+var ratio = window.devicePixelRatio || 1,
+    width = 960 * ratio,
+    height = 500 * ratio;
+
+var options = [
+  {name: "Aitoff", projection: d3.geo.aitoff()},
+  //{name: "Albers", projection: d3.geo.albers().scale(145).parallels([20, 50])},
+  //{name: "Bonne", projection: d3.geo.bonne().scale(120)},
+  {name: "August", projection: d3.geo.august().scale(80)},
+  {name: "Baker", projection: d3.geo.baker().scale(100)},
+  {name: "Boggs", projection: d3.geo.boggs()},
+  {name: "Bromley", projection: d3.geo.bromley()},
+  {name: "Collignon", projection: d3.geo.collignon().scale(93)},
+  {name: "Craster Parabolic", projection: d3.geo.craster()},
+  {name: "Eckert I", projection: d3.geo.eckert1().scale(165)},
+  {name: "Eckert II", projection: d3.geo.eckert2().scale(165)},
+  {name: "Eckert III", projection: d3.geo.eckert3().scale(180)},
+  {name: "Eckert IV", projection: d3.geo.eckert4().scale(180)},
+  {name: "Eckert V", projection: d3.geo.eckert5().scale(170)},
+  {name: "Eckert VI", projection: d3.geo.eckert6().scale(170)},
+  {name: "Eisenlohr", projection: d3.geo.eisenlohr().scale(60)},
+  {name: "Equirectangular (Plate Carrée)", projection: d3.geo.equirectangular()},
+  {name: "Hammer", projection: d3.geo.hammer().scale(165)},
+  //{name: "Hill", projection: d3.geo.hill()},
+  {name: "Goode Homolosine", projection: d3.geo.homolosine()},
+  {name: "Kavrayskiy VII", projection: d3.geo.kavrayskiy7()},
+  {name: "Lambert cylindrical equal-area", projection: d3.geo.cylindricalEqualArea()},
+  {name: "Lagrange", projection: d3.geo.lagrange().scale(120)},
+  {name: "Larrivée", projection: d3.geo.larrivee().scale(95)},
+  {name: "Laskowski", projection: d3.geo.laskowski().scale(120)},
+  {name: "Loximuthal", projection: d3.geo.loximuthal()},
+  {name: "Mercator", projection: d3.geo.mercator().scale(490)},
+  {name: "Miller", projection: d3.geo.miller().scale(100)},
+  {name: "McBryde–Thomas Flat-Polar Parabolic", projection: d3.geo.mtFlatPolarParabolic()},
+  {name: "McBryde–Thomas Flat-Polar Quartic", projection: d3.geo.mtFlatPolarQuartic()},
+  {name: "McBryde–Thomas Flat-Polar Sinusoidal", projection: d3.geo.mtFlatPolarSinusoidal()},
+  {name: "Mollweide", projection: d3.geo.mollweide().scale(165)},
+  {name: "Natural Earth", projection: d3.geo.naturalEarth()},
+  {name: "Nell–Hammer", projection: d3.geo.nellHammer()},
+  {name: "Polyconic", projection: d3.geo.polyconic().scale(100)},
+  {name: "Robinson", projection: d3.geo.robinson()},
+  {name: "Sinusoidal", projection: d3.geo.sinusoidal()},
+  {name: "Sinu-Mollweide", projection: d3.geo.sinuMollweide()},
+  {name: "van der Grinten", projection: d3.geo.vanDerGrinten().scale(75)},
+  {name: "van der Grinten IV", projection: d3.geo.vanDerGrinten4().scale(120)},
+  {name: "Wagner IV", projection: d3.geo.wagner4()},
+  {name: "Wagner VI", projection: d3.geo.wagner6()},
+  {name: "Wagner VII", projection: d3.geo.wagner7()},
+  {name: "Winkel Tripel", projection: d3.geo.winkel3()}
+];
+
+var initial = [-71, 42, 0],
+    rotate = initial.slice(),
+    transitioning = false,
+    velocity = [.30, -.2],
+    t0 = Date.now();
+
+var i = 0,
+    n = options.length - 1;
+
+var projection = options[i].projection;
+
+options.forEach(function(option) {
+  option.projection
+      .translate([width / 2, height / 2])
+      .scale(option.projection.scale() * ratio);
+});
+
+var graticule = d3.geo.graticule()(),
+    land,
+    boundaries;
+
+var canvas = d3.select("#map").append("canvas")
+    .attr("width", width)
+    .attr("height", height)
+    .style("width", width / ratio + "px")
+    .style("height", height / ratio + "px")
+    .call(d3.behavior.drag()
+      .origin(function() { return {x: rotate[0], y: -rotate[1]}; })
+      .on("dragstart", function() { transitioning = true; })
+      .on("drag", function(d) {
+        rotate[0] = d3.event.x;
+        rotate[1] = -d3.event.y;
+        projection.rotate(rotate);
+        redraw(path);
+      })
+      .on("dragend", function() {
+        transitioning = false;
+        t0 = Date.now();
+        initial = rotate.slice();
+      }));
+
+var context = canvas.node().getContext("2d");
+context.fillStyle = "#f9f9f9";
+context.strokeStyle = "#000";
+
+var path = d3.geo.path()
+    .projection(projection)
+    .context(context);
+
+var menu = d3.select("#projection-menu")
+    .on("change", change);
+
+menu.selectAll("option")
+    .data(options)
+  .enter().append("option")
+    .text(function(d) { return d.name; });
+
+function change() {
+  update(options[this.selectedIndex]);
+}
+
+function pathTween(projection0, projection1, rotate) {
+  projection0.rotate([0, 0, 0]);
+  projection1.rotate([0, 0, 0]);
+  var t = 0,
+      projection = d3.geo.projection(function(λ, φ) {
+          λ *= 180 / Math.PI, φ *= 180 / Math.PI;
+          var p0 = projection0([λ, φ]), p1 = projection1([λ, φ]);
+          return [(1 - t) * p0[0] + t * p1[0], (1 - t) * -p0[1] + t * -p1[1]];
+        }).rotate(rotate).scale(1).translate([width / 2, height / 2]),
+      path = d3.geo.path().projection(projection).context(context);
+  return function() {
+    return function(u) {
+      t = u;
+      redraw(path);
+    };
+  };
+}
+
+function update(option) {
+  transitioning = true;
+  canvas.transition()
+      .duration(750)
+      .tween("path", pathTween(projection, projection = option.projection, initial = rotate.slice()))
+      .each("end", function() {
+        transitioning = false;
+        t0 = Date.now();
+      });
+  path.projection(projection);
+}
+
+d3.timer(function() {
+  if (transitioning) return;
+  var t = Date.now() - t0;
+  if (controller.lastFrame.hands.length > 0) {
+    var norm = controller.lastFrame.hands[0].palmNormal;
+    rotate[0] += 40*norm[0]*Math.abs(norm[0]);
+    rotate[1] -= 14*(norm[2]+0.5)*Math.abs(norm[2]+0.5);
+  } else {
+    //rotate[0] += velocity[0];
+    //rotate[1] += velocity[1];
+  }
+  projection.rotate(rotate);
+  redraw(path);
+});
+
+function redraw(path) {
+  context.clearRect(0, 0, width, height);
+  context.lineWidth = .5 * ratio;
+  if (land) {
+    context.strokeStyle = "#000";
+    context.beginPath(), path(land), context.fill(), context.stroke();
+    context.beginPath(), path(boundaries), context.stroke();
+  }
+  context.strokeStyle = "#999";
+  context.beginPath(), path(graticule), context.stroke();
+  context.lineWidth = 2.5 * ratio, context.strokeStyle = "#000";
+  context.beginPath(), path({type: "Sphere"}), context.stroke();
+}
+
+d3.json("data/maps/world-110m.json", function(error, world) {
+  land = topojson.object(world, world.objects.land);
+  boundaries = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; });
+});
+
+</script>
