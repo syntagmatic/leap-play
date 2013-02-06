@@ -194,7 +194,7 @@ function fleas(data) {
 
     if ("pointables" in obj) {
       obj.pointables.forEach(function(p,i) {
-        ctxLengths.fillRect(4+i*12,canvasLengths.height,8,-canvasLengths.height*p.length/120);
+        ctxLengths.fillRect(2+p.id*6,canvasLengths.height,5,-canvasLengths.height*p.length/120);
       });
     }
   };

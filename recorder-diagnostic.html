@@ -3,19 +3,19 @@
 <h1>Gesture Diagnostics <small id="gesture-url"></small></h1>
 <canvas id="line" width=200 height=1300 style="position:absolute;"></canvas>
 <div class="left finger">
-  <canvas id="planar" width=160 height=160></canvas>
+  <canvas id="planar" width=200 height=140></canvas>
   <h4>Planar Pointables</h4>
 </div>
 <div class="left hand">
-  <canvas id="handable" width=160 height=160></canvas>
+  <canvas id="handable" width=200 height=140></canvas>
   <h4>Planar Hands</h4>
 </div>
 <div class="left finger">
-  <canvas id="profile" width=160 height=160></canvas>
+  <canvas id="profile" width=200 height=140></canvas>
   <h4>Profile Pointables</h4>
 </div>
 <div class="left finger">
-  <canvas id="pointable-lengths" width=160 height=160></canvas>
+  <canvas id="pointable-lengths" width=200 height=140></canvas>
   <h4>Pointable Lengths</h4>
 </div>
 <div style="clear:both;"></div>
@@ -149,7 +149,7 @@ function fleas(data) {
 
     if ("pointables" in obj) {
       obj.pointables.forEach(function(p,i) {
-        ctxLengths.fillRect(4+i*12,canvasLengths.height,8,-canvasLengths.height*p.length/120);
+        ctxLengths.fillRect(4+p.id*6,canvasLengths.height,5,-canvasLengths.height*p.length/120);
       });
     }
   };
