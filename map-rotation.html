@@ -152,6 +152,7 @@ var options = [
 
 var initial = [-71, 42, 0],
     rotate = initial.slice(),
+    scale = 200,
     transitioning = false,
     velocity = [.30, -.2],
     t0 = Date.now();
@@ -246,13 +247,16 @@ d3.timer(function() {
   var t = Date.now() - t0;
   if (controller.lastFrame.hands.length > 0) {
     var norm = controller.lastFrame.hands[0].palmNormal;
+    var pos = controller.lastFrame.hands[0].palmPosition;
     rotate[0] += 40*norm[0]*Math.abs(norm[0]);
-    rotate[1] -= 14*(norm[2]+0.42)*Math.abs(norm[2]+0.42);
+    rotate[1] -= 14*(norm[2]+0.26)*Math.abs(norm[2]+0.26);
+    scale += 0.05*(pos[1] - 173)*Math.pow(0.05*(pos[1] - 173),2);
   } else {
     //rotate[0] += velocity[0];
     //rotate[1] += velocity[1];
   }
-  projection.rotate(rotate);
+  if (scale < 100) { scale = 100; };
+  projection.rotate(rotate).scale(scale);
   redraw(path);
 });
 
