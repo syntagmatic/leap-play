@@ -271,7 +271,7 @@ function pointables(data) {
 function pointablesById(data) {
   var pointables_by_id = data.map(function(d,i) {
     if ("pointables" in d) return d.pointables.map(function(p) { return p.id; });
-    return 0;
+    return [];
   });
 
   var canvas = document.getElementById("pointables-by-id");

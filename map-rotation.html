@@ -247,7 +247,7 @@ d3.timer(function() {
   if (controller.lastFrame.hands.length > 0) {
     var norm = controller.lastFrame.hands[0].palmNormal;
     rotate[0] += 40*norm[0]*Math.abs(norm[0]);
-    rotate[1] -= 14*(norm[2]+0.5)*Math.abs(norm[2]+0.5);
+    rotate[1] -= 14*(norm[2]+0.42)*Math.abs(norm[2]+0.42);
   } else {
     //rotate[0] += velocity[0];
     //rotate[1] += velocity[1];
