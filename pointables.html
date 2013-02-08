@@ -5,19 +5,87 @@
 body {
   width: 980px;
   margin: 20px auto;
+  font-size: 15px;
+  font-family: sans-serif;
+  text-align: center;
+}
+svg {
+  width:980px;
+  height: 500px;
+  position: absolute;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.axis .label {
+  font-weight: bold;
+  font-size: 1.5em;
 }
 </style>
 <script src="js/lib/d3.v3.js"></script>
 <script src="js/lib/leap.js"></script>
+<h1>Pointables</h1>
+<svg></svg>
 <canvas id="fingers" height=500 width=980></canvas>
 <p>
-  Dots - X/Y position<br/>
-  Dot Size - Distance from [0,*,0] (doesn't use Y position)<br/>
+  Black Dots - X/Y position<br/>
+  Black Dot Size - Distance from [0,*,0] (doesn't use Y position)<br/>
   Gray bars - Pointable length<br/>
   Numbers - Pointable id
 </p>
 <script>
-var center = [0,170,0];
+var margin = { top: 20, right: 20, bottom: 20, left: 40 };
+var width = 980 - margin.right - margin.left;
+var height = 500 - margin.top - margin.bottom;
+var x = d3.scale.linear().range([0,width]).domain([-200,200]);
+var y = d3.scale.linear().range([height,0]).domain([0,400]);
+var xAxis = d3.svg.axis().scale(x).orient("bottom");
+var yAxis = d3.svg.axis().scale(y).orient("left");
+var svg = d3.select("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+// Tick marks
+
+svg
+  .append("g")
+  .attr("transform", "translate(0," + height + ")")
+  .attr("class", "x axis")
+  .call(xAxis);
+svg
+  .append("g")
+  .attr("class", "y axis")
+  .call(yAxis);
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis)
+  .append("text")
+    .attr("class", "label")
+    .attr("x", width)
+    .attr("y", -6)
+    .style("text-anchor", "end")
+    .text("X");
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis)
+  .append("text")
+    .attr("class", "label")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("Y")
+
+// most active location above leap sensor
+var center = [0,150,0];
 
 // connect leap motion
 var controller = new Leap.Controller();
@@ -28,29 +96,35 @@ controller.onFrame(function() {
 });
 
 // finger lengths
-var fingersCanvas = document.getElementById("fingers");
-var fingersctx = fingersCanvas.getContext("2d");
-var x = d3.scale.linear().range([0,fingersCanvas.width]).domain([-200,200]);
-var y = d3.scale.linear().range([fingersCanvas.height,0]).domain([0,400]);
-fingersctx.textAlign = "center";
-fingersctx.textBaseline = "bottom";
-fingersctx.font = "13pt sans-serif";
+var canvas = document.getElementById("fingers");
+canvas.width = width;
+canvas.height = height;
+d3.select("canvas")
+  .style("margin-top", margin.top + "px")
+  .style("margin-right", margin.right + "px")
+  .style("margin-bottom", margin.bottom + "px")
+  .style("margin-left", margin.left + "px");
+var ctx = canvas.getContext("2d");
+ctx.textAlign = "center";
+ctx.textBaseline = "bottom";
+ctx.font = "18pt sans-serif";
 function fingers(pointables) {
-  var w = fingersCanvas.width;
-  var h = fingersCanvas.height;
-  fingersctx.clearRect(0,0,w,h);
-  fingersctx.fillStyle = "rgba(0,0,0,0.4)";
-  pointables.map(function(p) {
-    fingersctx.fillRect(x(p.tipPosition[0]),h,4,-p.length);
-  });
-  fingersctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.clearRect(0,0,width,height);
   pointables.map(function(p) {
     var pos = p.tipPosition;
     var dist = 900/Math.sqrt( Math.pow(pos[0]-center[0], 2) + 
                             Math.pow(pos[2]-center[2], 2) + 0.00001 );
     var r = d3.min([dist, 30]);
-    fingersctx.fillRect(x(pos[0])-r/2, y(pos[1])-r/2, r, r);
-    fingersctx.fillText(p.id, x(pos[0]), y(pos[1]) - r);
+
+    // finger lengths
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(x(pos[0])-r/2,height,r,-2*p.length);
+    ctx.fillText(p.length.toPrecision(2), x(pos[0]), height-2*p.length-r/2);
+
+    // dots 
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillRect(x(pos[0])-r/2, y(pos[1])-r/2, r, r);
+    ctx.fillText(p.id, x(pos[0]), y(pos[1]) - r);
   });
 };
 </script>
