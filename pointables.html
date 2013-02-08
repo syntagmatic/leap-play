@@ -1,59 +1,56 @@
-<canvas id="output"></canvas>
-<script>
-var canvas = document.getElementById("output"),
-    ctx = canvas.getContext("2d");
-
-// fullscreen
-canvas.width = document.body.clientWidth;
-canvas.height = document.body.clientHeight;
-
-var widthScale = 1; //canvas.width/480;
-var heightScale = 1; //canvas.height/100;
-
-function draw(obj) {
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = "#222";
-  if ("pointables" in obj) {
-    obj.pointables.forEach(function(p) {
-      var pos = p.tipPosition;
-      var size = (250-pos[2])/15;
-      ctx.fillRect(canvas.width/2+widthScale*pos[0]-size/2,canvas.height/2-heightScale*pos[1]-size/2,size,size);
-    });
-  }
-};
-
-// Support both the WebSocket and MozWebSocket objects
-if ((typeof(WebSocket) == 'undefined') &&
-    (typeof(MozWebSocket) != 'undefined')) {
-  WebSocket = MozWebSocket;
-}
-
-//Create and open the socket
-ws = new WebSocket("ws://localhost:6437/");
-
-// On successful connection
-ws.onopen = function(event) {
-  // connected
-};
-
-// On message received
-ws.onmessage = function(event) {
-  var obj = JSON.parse(event.data);
-  var str = JSON.stringify(obj, undefined, 2);
-  draw(obj);
-};
-
-// On socket close
-ws.onclose = function(event) {
-  ws = null;
-  // disconnected
-}
-</script>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Realtime Diagnostics</title>
 <style>
-html, body { margin: 0; padding: 0}
 body {
-  font-size: 8px;
-  font-family: sans-serif;
+  width: 980px;
+  margin: 20px auto;
 }
 </style>
+<script src="js/lib/d3.v3.js"></script>
+<script src="js/lib/leap.js"></script>
+<canvas id="fingers" height=500 width=980></canvas>
+<p>
+  Dots - X/Y position<br/>
+  Dot Size - Distance from [0,*,0] (doesn't use Y position)<br/>
+  Gray bars - Pointable length<br/>
+  Numbers - Pointable id
+</p>
+<script>
+var center = [0,170,0];
+
+// connect leap motion
+var controller = new Leap.Controller();
+controller.connect();
+controller.onFrame(function() {
+  var obj = controller.frame();
+  fingers(obj.pointables);
+});
+
+// finger lengths
+var fingersCanvas = document.getElementById("fingers");
+var fingersctx = fingersCanvas.getContext("2d");
+var x = d3.scale.linear().range([0,fingersCanvas.width]).domain([-200,200]);
+var y = d3.scale.linear().range([fingersCanvas.height,0]).domain([0,400]);
+fingersctx.textAlign = "center";
+fingersctx.textBaseline = "bottom";
+fingersctx.font = "13pt sans-serif";
+function fingers(pointables) {
+  var w = fingersCanvas.width;
+  var h = fingersCanvas.height;
+  fingersctx.clearRect(0,0,w,h);
+  fingersctx.fillStyle = "rgba(0,0,0,0.4)";
+  pointables.map(function(p) {
+    fingersctx.fillRect(x(p.tipPosition[0]),h,4,-p.length);
+  });
+  fingersctx.fillStyle = "rgba(0,0,0,0.8)";
+  pointables.map(function(p) {
+    var pos = p.tipPosition;
+    var dist = 900/Math.sqrt( Math.pow(pos[0]-center[0], 2) + 
+                            Math.pow(pos[2]-center[2], 2) + 0.00001 );
+    var r = d3.min([dist, 30]);
+    fingersctx.fillRect(x(pos[0])-r/2, y(pos[1])-r/2, r, r);
+    fingersctx.fillText(p.id, x(pos[0]), y(pos[1]) - r);
+  });
+};
+</script>
