@@ -79,8 +79,8 @@ canvas {
 
 <p class="breadcrumbs">Original Map Projection Transitions example by <a href="http://www.jasondavies.com/">Jason Davies</a>
 
-<h1>Leap Map Rotation</h1>
-<h4>Using Palm Normals</h4>
+<h1>Leap Map Rotation and Zoom</h1>
+<h4>Using Palm Normal and Position</h4>
 
 <div id="map"></div>
 
@@ -88,6 +88,7 @@ canvas {
 
 <div class="wrapper">
   <p>Use your hand to rotate the globe. Hold your hand above the leap, towards the screen. Tilt left and right and pitch up an down to spin the globe. The normal vector of the hand is used to compute this rotation.
+  <p>Move your hand up and down to zoom. The "still" placement is 173mm above the Leap.
 </div>
 
 <script src="js/lib/d3.v3.js"></script>
@@ -97,7 +98,7 @@ canvas {
 <script>
 // connect leap motion
 var controller = new Leap.Controller();
-controller.connect()
+controller.connect();
 
 var ratio = window.devicePixelRatio || 1,
     width = 960 * ratio,
@@ -250,7 +251,8 @@ d3.timer(function() {
     var pos = controller.lastFrame.hands[0].palmPosition;
     rotate[0] += 40*norm[0]*Math.abs(norm[0]);
     rotate[1] -= 14*(norm[2]+0.26)*Math.abs(norm[2]+0.26);
-    scale += 0.05*(pos[1] - 173)*Math.pow(0.05*(pos[1] - 173),2);
+    dscale = 0.05*(pos[1] - 173)*Math.pow(0.05*(pos[1] - 173),2);
+    scale -= dscale;
   } else {
     //rotate[0] += velocity[0];
     //rotate[1] += velocity[1];
