@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Rotations</title>
+<style>
+body {
+  width: 980px;
+  margin: 20px auto;
+  font-size: 15px;
+  font-family: sans-serif;
+}
+svg {
+  width:980px;
+  height: 500px;
+  position: absolute;
+}
+.third {
+  float: left;
+  width: 33.3%;
+  height: 280px;
+}
+</style>
+<script src="js/lib/d3.v3.js"></script>
+<script src="js/lib/underscore.js"></script>
+<script src="js/lib/leap.js"></script>
+<h1>Rotation Matrices</h1>
+<div class="third">
+  Frame
+  <canvas id="frame"></canvas>
+</div>
+<div class="third">
+  Hand <span id="hand0-id"></span>
+  <canvas id="hand0"></canvas>
+</div>
+<div class="third">
+  Hand <span id="hand1-id"></span>
+  <canvas id="hand1"></canvas>
+</div>
+<div class="third">
+  Hand <span id="hand2-id"></span>
+  <canvas id="hand2"></canvas>
+</div>
+<div class="third">
+  Hand <span id="hand3-id"></span>
+  <canvas id="hand3"></canvas>
+</div>
+<p>
+Caveats: The components are created using palmNormal rather than the rotation matrix. The Y isn't oriented in the right direction, and seems quite finicky. Sometimes the rotation matrix seems to drop out, the palmNormal seems more consistent.
+</p>
+<script>
+// connect leap motion
+var controller = new Leap.Controller();
+controller.connect();
+controller.onFrame(function() {
+  var obj = controller.frame();
+  frameRotate("frame", obj.rotation);
+  if (obj.hands.length > 0) {
+    var ids = _(obj.hands).pluck("id");
+    ids.forEach(function(id,i) {
+      d3.select("#hand" + i + "-id").text(id);
+      rotate("hand" + i, obj.hands[i]);
+    });
+  }
+});
+
+var canvases = {};
+var ctxs = {};
+canvases.frame = document.getElementById("frame");
+[0,1,2,3].forEach(function(i) {
+  canvases["hand" + i] = document.getElementById("hand" + i);
+});
+for (k in canvases) {
+  canvases[k].height = 240;
+  canvases[k].width = 300;
+  ctxs[k] = canvases[k].getContext("2d");
+  ctxs[k].font = "13pt sans-serif";
+};
+
+
+var format = d3.format(".3f");
+function frameRotate(id, rot) {
+  var ctx = ctxs[id];
+  var canvas = canvases[id];
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // rotation matrix
+  rot.forEach(function(row,j) {
+    row.forEach(function(d,i) {
+      ctx.fillStyle = color(d);
+      ctx.font = Math.round(15*d) + "pt sans-serif";
+      ctx.fillText(format(d), 100*i, 30+40*j);
+    });
+  });
+};
+
+function rotate(id, hand) {
+  var rot = hand.rotation;
+  var norm = hand.palmNormal;
+
+  var ctx = ctxs[id];
+  var canvas = canvases[id];
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // rotation matrix
+  rot.forEach(function(row,j) {
+    row.forEach(function(d,i) {
+      ctx.fillStyle = color(d);
+      ctx.font = Math.round(15*d) + "pt sans-serif";
+      ctx.fillText(format(d), 100*i, 30+40*j);
+    });
+  });
+
+  // normal vector
+  ["X","Y","Z"].forEach(function(coord, i) {
+    ctx.fillStyle = "#000";
+    ctx.font = "10pt sans-serif";
+    ctx.fillText(coord, 34+100*i, 160);
+    ctx.beginPath();
+    ctx.moveTo(40+100*i, 180);
+    ctx.lineTo(40+100*i+30*Math.sin(Math.PI*norm[i]),180+30*Math.cos(Math.PI*norm[i]));
+    ctx.stroke();
+  });
+};
+
+function color(d) {
+  if (d > 0) {
+    return "black";
+  } else {
+    return "brown";
+  }
+};
+</script>
