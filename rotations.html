@@ -58,7 +58,14 @@ var controller = new Leap.Controller();
 controller.connect();
 controller.onFrame(function() {
   var obj = controller.frame();
+
+  // clear hand canvases
+  for (k in canvases) {
+    ctxs[k].clearRect(0,0,canvases[k].width,canvases[k].height);
+  };
+
   frameRotate("frame", obj.rotation);
+
   if (obj.hands.length > 0) {
     var ids = _(obj.hands).pluck("id");
     ids.forEach(function(id,i) {
@@ -86,7 +93,6 @@ var format = d3.format(".3f");
 function frameRotate(id, rot) {
   var ctx = ctxs[id];
   var canvas = canvases[id];
-  ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // rotation matrix
   rot.forEach(function(row,j) {
@@ -104,7 +110,6 @@ function rotate(id, hand) {
 
   var ctx = ctxs[id];
   var canvas = canvases[id];
-  ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // rotation matrix
   rot.forEach(function(row,j) {
