@@ -5,7 +5,7 @@
 body {
   width: 980px;
   margin: 20px auto;
-  font-size: 15px;
+  font-size: 13px;
   font-family: sans-serif;
 }
 svg {
@@ -44,7 +44,13 @@ svg {
   <canvas id="hand3"></canvas>
 </div>
 <p>
-Caveats: The components are created using palmNormal rather than the rotation matrix. The Y isn't oriented in the right direction, and seems quite finicky. Sometimes the rotation matrix seems to drop out, the palmNormal seems more consistent.
+Caveats: The components are created using palmNormal rather than the rotation matrix. The Y isn't oriented in the right direction, and seems quite finicky. Sometimes the rotation matrix drops out, even when the palmNormal keeps working.
+</p>
+<p>
+  <a href="http://en.wikipedia.org/wiki/Rotation_matrix">Rotation Matrix</a>
+</p>
+<p>
+  <a href="http://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions#Conversion_formulae_between_formalisms">Conversions between 3d rotation formalisms</a>
 </p>
 <script>
 // connect leap motion
@@ -86,7 +92,7 @@ function frameRotate(id, rot) {
   rot.forEach(function(row,j) {
     row.forEach(function(d,i) {
       ctx.fillStyle = color(d);
-      ctx.font = Math.round(15*d) + "pt sans-serif";
+      ctx.font = Math.round(15*Math.sqrt(Math.abs(d))) + "pt sans-serif";
       ctx.fillText(format(d), 100*i, 30+40*j);
     });
   });
@@ -104,7 +110,7 @@ function rotate(id, hand) {
   rot.forEach(function(row,j) {
     row.forEach(function(d,i) {
       ctx.fillStyle = color(d);
-      ctx.font = Math.round(15*d) + "pt sans-serif";
+      ctx.font = Math.round(15*Math.sqrt(Math.abs(d))) + "pt sans-serif";
       ctx.fillText(format(d), 100*i, 30+40*j);
     });
   });
